@@ -1,0 +1,29 @@
+方法一：
+第一步：在命令行输入net stop mysql命令关闭mysql服务
+第二步：使用--skip-grant-tables选项启动mysql服务
+              在命令行输入 mysqld --skip-grant-tables
+              命令运行之后，用户无法再输入指令，此时如果在任务管理器中可以看到名称为 mysqld的进程，则表示可以用root用户登录服务器了
+第三步：打开另一个命令行窗口，输入不加密码的登录命令
+              mysql -u root
+              登录成功后可以使用update语句修改密码
+              修改完成后，必须使用flush privileges语句刷新权限表，这样新的密码才能生效
+第四步：将输入mysqld --skip-grant-tables命令的命令行窗口关闭，接下来就可以使用新密码登录mysql服务器了
+方法二：
+     msyqld_saft方式找回密码
+第一步：停止mysql：service mysqld stop;
+第二步：安全模式启动：mysqld_safe–skip-grant-tables &
+第三步：无密码回车键登录：mysql-uroot –p
+第四步：重置密码：use mysql;update user set password=password('') where user=’root’and host=’localhost’;flush privileges;
+第五步：正常启动：service mysql restart
+       再使用mysqladmin：mysqladmin password '123456'
+方法三：
+    使用普通账号来找回密码
+(1)：有一个修改test库的用户：grant create,delete,update,insert,select on d3307.* to test@’%’ identified by ‘t1’;
+(2)：复制user表文件到test库下并且赋予mysql用户访问权限： 
+cp /home/data/mysql/data/mysql/user.* /home/data/mysql/data/test/;chown mysql.mysql /home/data/mysql/data/test/user.*
+(3)：mysql -utest -pt1登录修改root密码：
+(4)：将test库的user表文件覆盖 mysql库的user表文件 
+cp /home/data/mysql/data/mysql/user.* /tmp/; mv /home/data/mysql/data/test/user.* /home/data/mysql/data/mysql/ ; chown mysql.mysql /home/data/mysql/data/mysql/user.*;
+(5):查找mysql进程号，并且发送SIGHUP信号，重新加载权限表。 
+pgrep -n mysql; kill -SIGHUP 12234;
+(6):无密码登录，再使用mysqladmin重新设置密码。
